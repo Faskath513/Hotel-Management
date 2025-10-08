@@ -1,0 +1,156 @@
+<div class="min-h-screen bg-gray-50">
+  <header class="bg-white border-b">
+    <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+      <h1 class="text-2xl md:text-3xl font-bold">Hotel Management</h1>
+      <span class="text-sm text-gray-500">Angular + Tailwind</span>
+    </div>
+  </header>
+
+  <main class="max-w-6xl mx-auto px-6 py-6 space-y-10">
+    <!-- Error banner -->
+    <div *ngIf="error" class="p-3 rounded border border-red-200 bg-red-50 text-red-700">
+      {{ error }}
+    </div>
+
+    <!-- ROOMS -->
+    <section>
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-xl font-semibold">Rooms</h2>
+      </div>
+
+      <!-- Create Room -->
+      <form (ngSubmit)="addRoom()" class="bg-white rounded-xl shadow p-4 grid gap-3 md:grid-cols-4">
+        <div class="flex flex-col">
+          <label class="text-sm text-gray-600 mb-1">Room number</label>
+          <input class="border rounded px-3 py-2" placeholder="e.g. 101" name="number" />
+        </div>
+
+        <div class="flex flex-col">
+          <label class="text-sm text-gray-600 mb-1">Type</label>
+          <select class="border rounded px-3 py-2" name="type">
+            <option>Standard</option>
+            <option>Deluxe</option>
+            <option>Suite</option>
+          </select>
+        </div>
+
+        <div class="flex flex-col">
+          <label class="text-sm text-gray-600 mb-1">Price / night (€)</label>
+          <input type="number" min="0" class="border rounded px-3 py-2" placeholder="120" name="pricePerNight" />
+        </div>
+
+        <div class="flex items-end">
+          <button class="bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded w-full md:w-auto">
+            Add Room
+          </button>
+        </div>
+      </form>
+
+      <!-- Room list -->
+      <ul class="mt-4 grid gap-2 md:grid-cols-2">
+        <li *ngFor="let r of rooms" class="bg-white rounded-xl shadow p-3 flex items-center justify-between">
+          <div class="text-sm">
+            <div class="font-medium">#{{ r.number }} · {{ r.type }}</div>
+            <div class="text-gray-600">€{{ r.pricePerNight }} / night</div>
+          </div>
+        </li>
+      </ul>
+    </section>
+
+    <!-- GUESTS -->
+    <section>
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-xl font-semibold">Guests</h2>
+      </div>
+
+      <!-- Create Guest -->
+      <form (ngSubmit)="addGuest()" class="bg-white rounded-xl shadow p-4 grid gap-3 md:grid-cols-4">
+        <div class="md:col-span-2 flex flex-col">
+          <label class="text-sm text-gray-600 mb-1">Full name</label>
+          <input class="border rounded px-3 py-2" placeholder="e.g. Aisha Noor" name="fullName" />
+        </div>
+
+        <div class="flex flex-col">
+          <label class="text-sm text-gray-600 mb-1">Email</label>
+          <input class="border rounded px-3 py-2" placeholder="aisha@example.com" name="email" />
+        </div>
+
+        <div class="flex items-end">
+          <button class="bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded w-full md:w-auto">
+            Add Guest
+          </button>
+        </div>
+
+        <div class="md:col-span-2 flex flex-col">
+          <label class="text-sm text-gray-600 mb-1">Phone</label>
+          <input class="border rounded px-3 py-2" placeholder="+31 6 1234 5678" name="phone" />
+        </div>
+      </form>
+
+      <!-- Guest list -->
+      <ul class="mt-4 grid gap-2 md:grid-cols-2">
+        <li *ngFor="let g of guests" class="bg-white rounded-xl shadow p-3">
+          <div class="text-sm">
+            <div class="font-medium">{{ g.fullName }}</div>
+            <div *ngIf="g.email" class="text-gray-600">{{ g.email }}</div>
+          </div>
+        </li>
+      </ul>
+    </section>
+
+    <!-- BOOKINGS -->
+    <section>
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-xl font-semibold">Bookings</h2>
+      </div>
+
+      <!-- Create Booking -->
+      <form (ngSubmit)="addBooking()" class="bg-white rounded-xl shadow p-4 grid gap-3 md:grid-cols-5">
+        <div class="flex flex-col">
+          <label class="text-sm text-gray-600 mb-1">Room</label>
+          <select class="border rounded px-3 py-2" name="roomId">
+            <option *ngFor="let r of rooms" [value]="r.id">{{ r.number }} ({{ r.type }})</option>
+          </select>
+        </div>
+
+        <div class="flex flex-col">
+          <label class="text-sm text-gray-600 mb-1">Guest</label>
+          <select class="border rounded px-3 py-2" name="guestId">
+            <option *ngFor="let g of guests" [value]="g.id">{{ g.fullName }}</option>
+          </select>
+        </div>
+
+        <div class="flex flex-col">
+          <label class="text-sm text-gray-600 mb-1">Check-in</label>
+          <input type="date" class="border rounded px-3 py-2" name="checkIn" />
+        </div>
+
+        <div class="flex flex-col">
+          <label class="text-sm text-gray-600 mb-1">Check-out</label>
+          <input type="date" class="border rounded px-3 py-2" name="checkOut" />
+        </div>
+
+        <div class="flex items-end">
+          <button class="bg-green-600 hover:bg-green-700 text-white font-medium px-4 py-2 rounded w-full md:w-auto">
+            Add Booking
+          </button>
+        </div>
+      </form>
+
+      <!-- Booking list -->
+      <ul class="mt-4 grid gap-2">
+        <li *ngFor="let b of bookings" class="bg-white rounded-xl shadow p-3 flex items-center justify-between">
+          <div class="text-sm">
+            <div>
+              Room <span class="font-medium">{{ b.roomId }}</span>
+              → Guest <span class="font-medium">{{ b.guestId }}</span>
+            </div>
+            <div class="text-gray-600">
+              {{ b.checkIn }} → {{ b.checkOut }} · €{{ b.totalPrice }} · {{ b.status }}
+            </div>
+          </div>
+        </li>
+      </ul>
+    </section>
+  </main>
+</div>
