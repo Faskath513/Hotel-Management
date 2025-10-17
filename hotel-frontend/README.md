@@ -1,3 +1,27 @@
+## Hotel Frontend (Angular)
+
+### Prerequisites
+- Node 18+
+- Angular CLI (`npm i -g @angular/cli`)
+
+### Install and Run
+```bash
+cd hotel-frontend
+npm install
+npm start
+# App: http://localhost:4200
+```
+
+The app expects the backend at `http://localhost:5276`.
+
+### Features
+- Rooms: list and create
+- Guests: list and create
+- Bookings: list and create, with check-in/check-out actions
+
+### Environment
+Adjust API base in `src/app/services/hotel.service.ts` if your backend runs on a different URL.
+
 # HotelFrontend
 
 This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 20.3.4.

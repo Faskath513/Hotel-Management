@@ -154,3 +154,12 @@
 /Users/mohammedfaskath/HotelApp/HotelApi/bin/Debug/net9.0/Swashbuckle.AspNetCore.Swagger.dll
 /Users/mohammedfaskath/HotelApp/HotelApi/bin/Debug/net9.0/Swashbuckle.AspNetCore.SwaggerGen.dll
 /Users/mohammedfaskath/HotelApp/HotelApi/bin/Debug/net9.0/Swashbuckle.AspNetCore.SwaggerUI.dll
+/Users/mohammedfaskath/HotelApp/HotelApi/obj/Debug/net9.0/HotelApi.sourcelink.json
+/Users/mohammedfaskath/HotelApp/HotelApi/bin/Debug/net9.0/Microsoft.AspNetCore.Authentication.JwtBearer.dll
+/Users/mohammedfaskath/HotelApp/HotelApi/bin/Debug/net9.0/Microsoft.IdentityModel.Abstractions.dll
+/Users/mohammedfaskath/HotelApp/HotelApi/bin/Debug/net9.0/Microsoft.IdentityModel.JsonWebTokens.dll
+/Users/mohammedfaskath/HotelApp/HotelApi/bin/Debug/net9.0/Microsoft.IdentityModel.Logging.dll
+/Users/mohammedfaskath/HotelApp/HotelApi/bin/Debug/net9.0/Microsoft.IdentityModel.Protocols.dll
+/Users/mohammedfaskath/HotelApp/HotelApi/bin/Debug/net9.0/Microsoft.IdentityModel.Protocols.OpenIdConnect.dll
+/Users/mohammedfaskath/HotelApp/HotelApi/bin/Debug/net9.0/Microsoft.IdentityModel.Tokens.dll
+/Users/mohammedfaskath/HotelApp/HotelApi/bin/Debug/net9.0/System.IdentityModel.Tokens.Jwt.dll

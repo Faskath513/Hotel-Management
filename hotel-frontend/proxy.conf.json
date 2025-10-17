@@ -1,0 +1,9 @@
+{
+  "/auth": { "target": "http://localhost:5276", "secure": false, "changeOrigin": true },
+  "/rooms": { "target": "http://localhost:5276", "secure": false, "changeOrigin": true },
+  "/guests": { "target": "http://localhost:5276", "secure": false, "changeOrigin": true },
+  "/bookings": { "target": "http://localhost:5276", "secure": false, "changeOrigin": true },
+  "/reports": { "target": "http://localhost:5276", "secure": false, "changeOrigin": true }
+}
+
+

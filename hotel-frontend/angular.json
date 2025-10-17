@@ -59,7 +59,8 @@
               "buildTarget": "hotel-frontend:build:production"
             },
             "development": {
-              "buildTarget": "hotel-frontend:build:development"
+              "buildTarget": "hotel-frontend:build:development",
+              "proxyConfig": "proxy.conf.json"
             }
           },
           "defaultConfiguration": "development"

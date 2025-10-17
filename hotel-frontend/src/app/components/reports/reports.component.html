@@ -1,0 +1,174 @@
+<section class="space-y-6">
+  <!-- Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+    <h2 class="text-xl font-semibold">Reports</h2>
+
+    <div class="flex items-center gap-2">
+      <button (click)="prevDay()" class="px-3 py-2 rounded border hover:bg-slate-50">←</button>
+      <input
+        type="date"
+        class="border rounded px-3 py-2"
+        [formControl]="filter.controls.date"
+      />
+      <button (click)="nextDay()" class="px-3 py-2 rounded border hover:bg-slate-50">→</button>
+      <button (click)="setToday()" class="px-3 py-2 rounded border hover:bg-slate-50">Today</button>
+      <button (click)="refresh()" class="bg-slate-900 hover:bg-black text-white px-3 py-2 rounded">Refresh</button>
+    </div>
+  </div>
+
+  <!-- Date caption -->
+  <div class="text-sm text-slate-500">
+    Showing metrics for <span class="font-medium text-slate-700">{{ filter.value.date }}</span>
+  </div>
+
+  <!-- Error -->
+  <div *ngIf="error" class="p-3 rounded-lg border border-red-200 bg-red-50 text-red-700">
+    {{ error }}
+  </div>
+
+  <!-- KPIs -->
+  <div class="grid gap-3 sm:grid-cols-3">
+    <!-- Available -->
+    <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
+      <div class="flex items-center justify-between">
+        <div class="text-sm text-slate-500">Available rooms</div>
+        <div class="size-8 rounded-lg bg-emerald-100 text-emerald-700 grid place-items-center">✓</div>
+      </div>
+      <div class="mt-1 text-3xl font-extrabold">
+        <ng-container *ngIf="!loadingAvailable; else sk1">{{ available.length }}</ng-container>
+      </div>
+      <ng-template #sk1>
+        <div class="h-8 w-16 bg-slate-100 animate-pulse rounded"></div>
+      </ng-template>
+    </div>
+
+    <!-- Occupied -->
+    <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
+      <div class="flex items-center justify-between">
+        <div class="text-sm text-slate-500">Occupied rooms</div>
+        <div class="size-8 rounded-lg bg-amber-100 text-amber-700 grid place-items-center">●</div>
+      </div>
+      <div class="mt-1 text-3xl font-extrabold">
+        <ng-container *ngIf="!loadingOccupied; else sk2">{{ occupied.length }}</ng-container>
+      </div>
+      <ng-template #sk2>
+        <div class="h-8 w-16 bg-slate-100 animate-pulse rounded"></div>
+      </ng-template>
+    </div>
+
+    <!-- Revenue -->
+    <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
+      <div class="flex items-center justify-between">
+        <div class="text-sm text-slate-500">Daily revenue</div>
+        <div class="size-8 rounded-lg bg-blue-100 text-blue-700 grid place-items-center">€</div>
+      </div>
+      <div class="mt-1 text-3xl font-extrabold">
+        <ng-container *ngIf="!loadingRevenue; else sk3">
+          {{ (revenue?.revenue ?? 0) | currency:'EUR':'symbol' }}
+        </ng-container>
+      </div>
+      <ng-template #sk3>
+        <div class="h-8 w-28 bg-slate-100 animate-pulse rounded"></div>
+      </ng-template>
+    </div>
+  </div>
+
+  <!-- Lists -->
+  <div class="grid md:grid-cols-2 gap-6">
+    <!-- Available list -->
+    <div>
+      <div class="flex items-center justify-between mb-2">
+        <h3 class="font-medium">Available rooms</h3>
+        <span class="text-xs text-slate-500">{{ available.length }} result(s)</span>
+      </div>
+
+      <!-- loading -->
+      <div *ngIf="loadingAvailable" class="grid gap-2">
+        <div class="h-16 rounded-xl bg-slate-100 animate-pulse"></div>
+        <div class="h-16 rounded-xl bg-slate-100 animate-pulse"></div>
+      </div>
+
+      <ul *ngIf="!loadingAvailable" class="grid gap-2">
+        <li
+          *ngFor="let r of available; trackBy: trackRoom"
+          class="bg-white rounded-xl border border-slate-200 shadow-sm p-3 flex items-center justify-between"
+        >
+          <div class="text-sm">
+            <div class="font-semibold">#{{ r.number }}
+              <span class="mx-2 text-slate-400">·</span>
+              <span class="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-xs">{{ r.type }}</span>
+            </div>
+            <div class="text-slate-600">{{ r.pricePerNight | currency:'EUR':'symbol' }} / night</div>
+          </div>
+        </li>
+        <li *ngIf="!available.length" class="text-slate-500 text-sm">No rooms available for this date.</li>
+      </ul>
+    </div>
+
+    <!-- Occupied list -->
+    <div>
+      <div class="flex items-center justify-between mb-2">
+        <h3 class="font-medium">Occupied rooms</h3>
+        <span class="text-xs text-slate-500">{{ occupied.length }} booking(s)</span>
+      </div>
+
+      <!-- loading -->
+      <div *ngIf="loadingOccupied" class="grid gap-2">
+        <div class="h-16 rounded-xl bg-slate-100 animate-pulse"></div>
+        <div class="h-16 rounded-xl bg-slate-100 animate-pulse"></div>
+      </div>
+
+      <ul *ngIf="!loadingOccupied" class="grid gap-2">
+        <li
+          *ngFor="let b of occupied; trackBy: trackBooking"
+          class="bg-white rounded-xl border border-slate-200 shadow-sm p-3"
+        >
+          <div class="text-sm">
+            <div class="font-semibold">Room {{ b.roomId }}
+              <span class="mx-2 text-slate-400">·</span>
+              Booking #{{ b.id }}
+              <span class="ml-2 inline-flex items-center rounded-full px-2 py-0.5 text-xs"
+                    [ngClass]="b.status === 'CheckedIn' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-700'">
+                {{ b.status }}
+              </span>
+            </div>
+            <div class="text-slate-600">
+              {{ b.checkIn | date:'y-MM-dd' }} → {{ b.checkOut | date:'y-MM-dd' }}
+            </div>
+          </div>
+        </li>
+        <li *ngIf="!occupied.length" class="text-slate-500 text-sm">No occupied rooms for this date.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Upcoming check-outs -->
+  <div>
+    <div class="flex items-center justify-between mb-2">
+      <h3 class="font-medium">Upcoming check-outs</h3>
+      <span class="text-xs text-slate-500">{{ upcoming.length }} due</span>
+    </div>
+
+    <!-- loading -->
+    <div *ngIf="loadingUpcoming" class="grid gap-2">
+      <div class="h-16 rounded-xl bg-slate-100 animate-pulse"></div>
+      <div class="h-16 rounded-xl bg-slate-100 animate-pulse"></div>
+    </div>
+
+    <ul *ngIf="!loadingUpcoming" class="grid gap-2">
+      <li
+        *ngFor="let b of upcoming; trackBy: trackBooking"
+        class="bg-white rounded-xl border border-slate-200 shadow-sm p-3"
+      >
+        <div class="text-sm">
+          Room {{ b.roomId }}
+          <span class="mx-2 text-slate-400">·</span>
+          Guest {{ b.guestId }}
+          <span class="mx-2 text-slate-400">·</span>
+          {{ b.checkOut | date:'y-MM-dd' }}
+        </div>
+      </li>
+      <li *ngIf="!upcoming.length" class="text-slate-500 text-sm">No upcoming check-outs.</li>
+    </ul>
+  </div>
+</section>

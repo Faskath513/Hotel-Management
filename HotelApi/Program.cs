@@ -1,5 +1,9 @@
 using HotelApi.Data;
 using HotelApi.Models;
+using HotelApi.Endpoints;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 
@@ -13,7 +17,38 @@ builder.Services.AddDbContext<AppDbContext>(opt =>
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+// CORS for Angular dev server
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(policy =>
+        policy.AllowAnyHeader().AllowAnyMethod().WithOrigins("http://localhost:4200"));
+});
+
+// JWT Auth
+var jwtSecret = builder.Configuration["Jwt:Secret"] ?? "dev_secret_change_me_please_1234567890";
+var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret));
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = false,
+            ValidateAudience = false,
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = key,
+            ClockSkew = TimeSpan.Zero
+        };
+    });
+builder.Services.AddAuthorization();
+
 var app = builder.Build();
+
+// Auto-apply migrations at startup (dev convenience)
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    db.Database.Migrate();
+}
 
 if (app.Environment.IsDevelopment())
 {
@@ -25,93 +60,18 @@ if (app.Environment.IsDevelopment())
 // or comment this in/out as you prefer.
 // app.UseHttpsRedirection();
 
+app.UseCors();
+app.UseAuthentication();
+app.UseAuthorization();
+
 app.MapGet("/", () => Results.Redirect("/swagger"));
 
-// ---------- Rooms ----------
-app.MapGet("/rooms", async (AppDbContext db) =>
-    await db.Rooms.OrderBy(r => r.Number).ToListAsync());
-
-app.MapGet("/rooms/{id:int}", async (AppDbContext db, int id) =>
-    await db.Rooms.FindAsync(id) is Room r ? Results.Ok(r) : Results.NotFound());
-
-app.MapPost("/rooms", async (AppDbContext db, Room room) =>
-{
-    db.Rooms.Add(room);
-    await db.SaveChangesAsync();
-    return Results.Created($"/rooms/{room.Id}", room);
-});
-
-app.MapPut("/rooms/{id:int}", async (AppDbContext db, int id, Room input) =>
-{
-    var room = await db.Rooms.FindAsync(id);
-    if (room is null) return Results.NotFound();
-    room.Number = input.Number;
-    room.Type = input.Type;
-    room.PricePerNight = input.PricePerNight;
-    await db.SaveChangesAsync();
-    return Results.NoContent();
-});
-
-app.MapDelete("/rooms/{id:int}", async (AppDbContext db, int id) =>
-{
-    var room = await db.Rooms.FindAsync(id);
-    if (room is null) return Results.NotFound();
-    db.Rooms.Remove(room);
-    await db.SaveChangesAsync();
-    return Results.NoContent();
-});
-
-// ---------- Guests ----------
-app.MapGet("/guests", async (AppDbContext db) =>
-    await db.Guests.OrderBy(g => g.FullName).ToListAsync());
-
-app.MapPost("/guests", async (AppDbContext db, Guest guest) =>
-{
-    db.Guests.Add(guest);
-    await db.SaveChangesAsync();
-    return Results.Created($"/guests/{guest.Id}", guest);
-});
-
-// ---------- Bookings ----------
-app.MapGet("/bookings", async (AppDbContext db) =>
-    await db.Bookings.Include(b => b.Room).Include(b => b.Guest)
-        .OrderByDescending(b => b.CheckIn)
-        .ToListAsync());
-
-app.MapPost("/bookings", async (AppDbContext db, BookingDto dto) =>
-{
-    if (dto.CheckOut <= dto.CheckIn)
-        return Results.BadRequest("Check-out must be after check-in.");
-
-    var room = await db.Rooms.FindAsync(dto.RoomId);
-    var guest = await db.Guests.FindAsync(dto.GuestId);
-    if (room is null || guest is null)
-        return Results.NotFound("Room or guest not found.");
-
-    var overlaps = await db.Bookings.AnyAsync(b =>
-        b.RoomId == dto.RoomId &&
-        dto.CheckIn < b.CheckOut &&
-        dto.CheckOut > b.CheckIn);
-
-    if (overlaps) return Results.Conflict("That room is already booked for the selected dates.");
-
-    var nights = (dto.CheckOut.Date - dto.CheckIn.Date).TotalDays;
-    var total = (decimal)nights * room!.PricePerNight;
-
-    var booking = new Booking
-    {
-        RoomId = dto.RoomId,
-        GuestId = dto.GuestId,
-        CheckIn = dto.CheckIn.Date,
-        CheckOut = dto.CheckOut.Date,
-        TotalPrice = total,
-        Status = "Confirmed"
-    };
-
-    db.Bookings.Add(booking);
-    await db.SaveChangesAsync();
-    return Results.Created($"/bookings/{booking.Id}", booking);
-});
+// Endpoint groups
+app.MapRoomsEndpoints();
+app.MapGuestsEndpoints();
+app.MapBookingsEndpoints();
+app.MapReportsEndpoints();
+app.MapAuthEndpoints(app.Configuration);
 
 app.Run();
 

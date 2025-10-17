@@ -1,0 +1,143 @@
+<section class="space-y-4">
+  <!-- Header + actions -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+    <div>
+      <h2 class="text-xl font-bold">Guests</h2>
+      <p class="text-sm text-slate-500">Manage guest profiles and contact details.</p>
+    </div>
+
+    <div class="flex flex-wrap items-center gap-2">
+      <input
+        type="search"
+        class="w-64 max-w-full border rounded-lg px-3 py-2 text-sm"
+        placeholder="Search by name, email, phone…"
+        [(ngModel)]="q"
+        (ngModelChange)="filter()"
+      />
+      <button
+        type="button"
+        (click)="startCreate()"
+        class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-lg"
+      >
+        ＋ Add guest
+      </button>
+    </div>
+  </div>
+
+  <!-- Error -->
+  <div *ngIf="error" class="p-3 rounded-lg border border-red-200 bg-red-50 text-red-700">
+    {{ error }}
+  </div>
+
+  <!-- Create / Edit card -->
+  <form
+    *ngIf="formOpen"
+    [formGroup]="form"
+    (ngSubmit)="editingId ? saveEdit() : addGuest()"
+    class="bg-white dark:bg-slate-900/60 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm p-4 grid gap-3 md:grid-cols-4"
+  >
+    <div class="md:col-span-2 flex flex-col">
+      <label class="text-sm text-slate-600 mb-1">Full name</label>
+      <input class="border rounded-lg px-3 py-2" placeholder="e.g. Aisha Noor" formControlName="fullName" />
+      <small class="text-xs text-red-600 mt-1" *ngIf="form.controls.fullName.invalid && form.touched">
+        Full name is required
+      </small>
+    </div>
+    <div class="flex flex-col">
+      <label class="text-sm text-slate-600 mb-1">Email</label>
+      <input class="border rounded-lg px-3 py-2" placeholder="aisha@example.com" formControlName="email" />
+      <small class="text-xs text-red-600 mt-1" *ngIf="form.controls.email.invalid && form.touched">
+        Enter a valid email address
+      </small>
+    </div>
+    <div class="flex flex-col">
+      <label class="text-sm text-slate-600 mb-1">Phone</label>
+      <input class="border rounded-lg px-3 py-2" placeholder="+94 7X XXX XXXX" formControlName="phone" />
+    </div>
+
+    <div class="md:col-span-4 flex items-center gap-2 justify-end">
+      <button
+        class="bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-lg disabled:opacity-50"
+        [disabled]="saving || form.invalid"
+      >
+        {{ editingId ? 'Save changes' : 'Add guest' }}
+      </button>
+      <button
+        type="button"
+        (click)="cancelForm()"
+        class="bg-slate-100 hover:bg-slate-200 text-slate-800 font-medium px-4 py-2 rounded-lg"
+      >
+        Cancel
+      </button>
+    </div>
+  </form>
+
+  <!-- Loading skeleton -->
+  <div *ngIf="loading" class="grid gap-2 md:grid-cols-2">
+    <div class="h-20 rounded-xl bg-slate-100 animate-pulse"></div>
+    <div class="h-20 rounded-xl bg-slate-100 animate-pulse"></div>
+    <div class="h-20 rounded-xl bg-slate-100 animate-pulse"></div>
+  </div>
+
+  <!-- Empty state -->
+  <div *ngIf="!loading && view.length === 0" class="rounded-2xl border border-dashed border-slate-300 p-8 text-center">
+    <div class="text-3xl mb-2">👥</div>
+    <p class="font-medium">No guests found</p>
+    <p class="text-slate-500 text-sm">Try adjusting your search, or add a new guest.</p>
+    <button
+      type="button"
+      (click)="startCreate()"
+      class="mt-4 inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-lg"
+    >
+      ＋ Add guest
+    </button>
+  </div>
+
+  <!-- Guests list -->
+  <ul *ngIf="!loading && view.length" class="grid gap-2 md:grid-cols-2">
+    <li *ngFor="let g of view" class="bg-white dark:bg-slate-900/60 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm p-4">
+      <div class="flex items-start justify-between gap-3">
+        <div class="text-sm">
+          <div class="font-semibold text-slate-900 dark:text-slate-100">{{ g.fullName }}</div>
+          <div class="mt-1 flex flex-wrap items-center gap-2 text-slate-600 dark:text-slate-400">
+            <span *ngIf="g.email" class="inline-flex items-center gap-1 rounded-full bg-slate-100 dark:bg-slate-800 px-2 py-0.5 text-xs">
+              ✉️ {{ g.email }}
+            </span>
+            <span *ngIf="g.phone" class="inline-flex items-center gap-1 rounded-full bg-slate-100 dark:bg-slate-800 px-2 py-0.5 text-xs">
+              📞 {{ g.phone }}
+            </span>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button (click)="edit(g)" class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm px-3 py-2 rounded-lg">
+            Edit
+          </button>
+          <button (click)="askDelete(g)" class="bg-red-600 hover:bg-red-700 text-white text-sm px-3 py-2 rounded-lg">
+            Delete
+          </button>
+        </div>
+      </div>
+    </li>
+  </ul>
+
+  <!-- Delete confirm modal -->
+  <div
+    class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+    *ngIf="confirmDelete"
+    (click)="confirmDelete=null"
+  >
+    <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-xl p-6 w-full max-w-sm" (click)="$event.stopPropagation()">
+      <h3 class="text-lg font-semibold">Delete guest?</h3>
+      <p class="text-sm text-slate-600 dark:text-slate-400 mt-1">
+        {{ confirmDelete!.fullName }} will be removed. This cannot be undone.
+      </p>
+      <div class="mt-4 flex items-center justify-end gap-2">
+        <button class="px-4 py-2 rounded-lg bg-slate-100 dark:bg-slate-800" (click)="confirmDelete=null">Cancel</button>
+        <button class="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white" (click)="remove(confirmDelete!)">
+          Delete
+        </button>
+      </div>
+    </div>
+  </div>
+</section>

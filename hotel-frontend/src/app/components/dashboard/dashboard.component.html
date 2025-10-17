@@ -1,0 +1,58 @@
+<section class="space-y-6">
+  <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+    <div class="rounded-2xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 p-4">
+      <div class="text-xs text-slate-500">Available Rooms</div>
+      <div class="text-2xl font-bold mt-1">{{ kpis.availableCount }}</div>
+    </div>
+    <div class="rounded-2xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 p-4">
+      <div class="text-xs text-slate-500">Occupied Rooms</div>
+      <div class="text-2xl font-bold mt-1">{{ kpis.occupiedCount }}</div>
+    </div>
+    <div class="rounded-2xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 p-4">
+      <div class="text-xs text-slate-500">Revenue Today</div>
+      <div class="text-2xl font-bold mt-1">{{ kpis.revenueToday | currency:'EUR':'symbol' }}</div>
+    </div>
+    <div class="rounded-2xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 p-4">
+      <div class="text-xs text-slate-500">Upcoming Check-outs</div>
+      <div class="text-2xl font-bold mt-1">{{ kpis.upcomingCheckouts }}</div>
+    </div>
+  </div>
+
+  <form [formGroup]="rangeForm" (ngSubmit)="refresh()" class="flex flex-wrap items-end gap-3">
+    <div class="flex flex-col">
+      <label class="text-xs text-slate-500">From</label>
+      <input type="date" formControlName="from" class="border rounded-lg px-3 py-2" />
+    </div>
+    <div class="flex flex-col">
+      <label class="text-xs text-slate-500">To</label>
+      <input type="date" formControlName="to" class="border rounded-lg px-3 py-2" />
+    </div>
+    <button class="bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-lg" [disabled]="loading">Refresh</button>
+  </form>
+
+  <div class="grid gap-4 lg:grid-cols-2">
+    <div class="rounded-2xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 p-4">
+      <div class="font-semibold mb-2">Available Rooms</div>
+      <ul class="space-y-1 max-h-64 overflow-auto">
+        <li *ngFor="let r of lists.availableRooms" class="text-sm">#{{ r.number }} · {{ r.type }} <span *ngIf="r.name" class="text-slate-500">({{ r.name }})</span></li>
+      </ul>
+    </div>
+    <div class="rounded-2xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 p-4">
+      <div class="font-semibold mb-2">Occupied Rooms</div>
+      <ul class="space-y-1 max-h-64 overflow-auto">
+        <li *ngFor="let b of lists.occupiedBookings" class="text-sm">Room #{{ b.roomId }} · Guest #{{ b.guestId }} ({{ b.checkIn }} → {{ b.checkOut }})</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="rounded-2xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 p-4">
+    <div class="font-semibold mb-2">Upcoming Check-outs</div>
+    <ul class="space-y-1 max-h-64 overflow-auto">
+      <li *ngFor="let u of lists.upcoming" class="text-sm">Booking #{{ u.id }} · Room #{{ u.roomId }} · {{ u.checkOut }}</li>
+    </ul>
+  </div>
+
+  <div *ngIf="error" class="p-3 rounded-lg border border-red-200 bg-red-50 text-red-700">{{ error }}</div>
+</section>
+
+

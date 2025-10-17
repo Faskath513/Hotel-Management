@@ -1,115 +1,201 @@
-import { Component, OnInit } from '@angular/core';
-import { FormBuilder, Validators } from '@angular/forms';
-import { HotelService, Room, Guest, Booking } from './services/hotel.service';
-import { forkJoin } from 'rxjs';
+import { Component, OnInit, OnDestroy } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { Router, RouterLink, RouterOutlet, NavigationEnd } from '@angular/router';
+import { Subject, takeUntil, filter } from 'rxjs';
+
+// Feature components
+import { LoginComponent } from './components/login/login.component';
+// import { HotelService } from './services/hotel.service'; // Uncomment when available
 
 @Component({
   selector: 'app-root',
-  templateUrl: './app.component.html'
+  standalone: true,
+  imports: [CommonModule, RouterOutlet, RouterLink, LoginComponent],
+  templateUrl: './app.component.html',
+  styleUrls: ['./app.css']
 })
-export class AppComponent implements OnInit {
-  rooms: Room[] = [];
-  guests: Guest[] = [];
-  bookings: Booking[] = [];
-  error = '';
-  saving = false;
+export class AppComponent implements OnInit, OnDestroy {
+  // UI State
+  mobileOpen = false;
+  isCheckingAuth = true;
+  
+  // System Status
+  apiHealthy = true;
+  appVersion = '1.0.0';
+  currentYear = new Date().getFullYear();
+  
+  // Navigation items
+  navItems = [
+    { path: '/dashboard', label: 'Dashboard', icon: '📊' },
+    { path: '/rooms', label: 'Rooms', icon: '🛏️' },
+    { path: '/guests', label: 'Guests', icon: '👥' },
+    { path: '/bookings', label: 'Bookings', icon: '📅' },
+    { path: '/reports', label: 'Reports', icon: '📈' }
+  ];
 
-  roomForm: any;
-  guestForm: any;
-  bookingForm: any;
+  private destroy$ = new Subject<void>();
 
-  constructor(private api: HotelService, private fb: FormBuilder) {}
+  constructor(
+    private router: Router
+    // private hotelService: HotelService // Uncomment when available
+  ) {}
 
   ngOnInit(): void {
-    this.roomForm = this.fb.group({
-      number: ['', [Validators.required]],
-      type: ['Standard', [Validators.required]],
-      pricePerNight: [0, [Validators.required, Validators.min(0)]],
-    });
-
-    this.guestForm = this.fb.group({
-      fullName: ['', [Validators.required]],
-      email: [''],
-      phone: ['']
-    });
-
-    this.bookingForm = this.fb.group({
-      roomId: [null as number | null, [Validators.required]],
-      guestId: [null as number | null, [Validators.required]],
-      checkIn: ['', [Validators.required]],
-      checkOut: ['', [Validators.required]]
-    });
-
-    this.refresh();
+    this.restoreTheme();
+    this.checkApiHealth();
+    this.setupRouterEvents();
+    
+    // Simulate auth check completion
+    setTimeout(() => this.isCheckingAuth = false, 300);
   }
 
-  refresh() {
-    this.error = '';
-    forkJoin({
-      rooms: this.api.getRooms(),
-      guests: this.api.getGuests(),
-      bookings: this.api.getBookings()
-    }).subscribe({
-      next: ({ rooms, guests, bookings }) => {
-        this.rooms = rooms;
-        this.guests = guests;
-        this.bookings = bookings;
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
 
-        // Preselect first room/guest for booking form
-        if (!this.bookingForm.value.roomId && rooms.length) {
-          this.bookingForm.patchValue({ roomId: rooms[0].id });
+  // ============================================
+  // Authentication
+  // ============================================
+  
+  get token(): string | null {
+    try { 
+      return localStorage.getItem('auth_token'); 
+    } catch { 
+      return null; 
+    }
+  }
+
+  get username(): string {
+    try { 
+      return localStorage.getItem('auth_user') ?? 'User'; 
+    } catch { 
+      return 'User'; 
+    }
+  }
+
+  get isLoggedIn(): boolean {
+    return !!this.token;
+  }
+
+  onLoggedIn(): void {
+    this.mobileOpen = false;
+    this.isCheckingAuth = false;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    this.router.navigateByUrl('/dashboard');
+  }
+
+  doLogout(): void {
+    try {
+      localStorage.removeItem('auth_token');
+      localStorage.removeItem('auth_user');
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+    
+    this.mobileOpen = false;
+    this.router.navigateByUrl('/');
+    
+    // Optional: Show logout success message
+    // this.showNotification('Logged out successfully');
+  }
+
+  // ============================================
+  // Navigation
+  // ============================================
+
+  private setupRouterEvents(): void {
+    this.router.events
+      .pipe(
+        filter(event => event instanceof NavigationEnd),
+        takeUntil(this.destroy$)
+      )
+      .subscribe(() => {
+        // Close mobile menu on navigation
+        this.mobileOpen = false;
+        // Scroll to top on route change
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+  }
+
+  toggleMobile(): void {
+    this.mobileOpen = !this.mobileOpen;
+  }
+
+  closeMobile(): void {
+    this.mobileOpen = false;
+  }
+
+  // ============================================
+  // Theme Management
+  // ============================================
+
+  get isDarkMode(): boolean {
+    return document.documentElement.classList.contains('dark');
+  }
+
+  toggleDark(): void {
+    const html = document.documentElement;
+    html.classList.toggle('dark');
+    const theme = html.classList.contains('dark') ? 'dark' : 'light';
+    
+    try {
+      localStorage.setItem('theme', theme);
+    } catch (error) {
+      console.error('Theme save error:', error);
+    }
+  }
+
+  private restoreTheme(): void {
+    try {
+      const saved = localStorage.getItem('theme');
+      const html = document.documentElement;
+      
+      // Check system preference if no saved theme
+      if (!saved) {
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        if (prefersDark) {
+          html.classList.add('dark');
         }
-        if (!this.bookingForm.value.guestId && guests.length) {
-          this.bookingForm.patchValue({ guestId: guests[0].id });
+      } else if (saved === 'dark') {
+        html.classList.add('dark');
+      } else {
+        html.classList.remove('dark');
+      }
+    } catch (error) {
+      console.error('Theme restore error:', error);
+    }
+  }
+
+  // ============================================
+  // System Health
+  // ============================================
+
+  private checkApiHealth(): void {
+    // Uncomment when HotelService is available
+    /*
+    this.hotelService.checkHealth()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          this.apiHealthy = true;
+        },
+        error: () => {
+          this.apiHealthy = false;
+          console.error('API health check failed');
         }
-      },
-      error: (err) => this.error = err?.error ?? err?.message ?? 'Failed to load data'
-    });
+      });
+    */
+    
+    // Mock health check for now
+    this.apiHealthy = true;
   }
 
-  async addRoom() {
-    if (this.roomForm.invalid) return;
-    this.saving = true;
-    this.error = '';
-    try {
-      const created = await this.api.addRoom(this.roomForm.getRawValue() as any).toPromise();
-      if (created) this.rooms.push(created);
-      this.roomForm.reset({ number: '', type: 'Standard', pricePerNight: 0 });
-    } catch (e: any) {
-      this.error = e?.error ?? e?.message ?? 'Failed to add room';
-    } finally { this.saving = false; }
-  }
+  // ============================================
+  // Utility Methods
+  // ============================================
 
-  async addGuest() {
-    if (this.guestForm.invalid) return;
-    this.saving = true;
-    this.error = '';
-    try {
-      const created = await this.api.addGuest(this.guestForm.getRawValue() as any).toPromise();
-      if (created) this.guests.push(created);
-      this.guestForm.reset({ fullName: '', email: '', phone: '' });
-    } catch (e: any) {
-      this.error = e?.error ?? e?.message ?? 'Failed to add guest';
-    } finally { this.saving = false; }
-  }
-
-  async addBooking() {
-    if (this.bookingForm.invalid) return;
-    const { roomId, guestId, checkIn, checkOut } = this.bookingForm.getRawValue();
-    this.saving = true;
-    this.error = '';
-    try {
-      const created = await this.api.addBooking({
-        roomId: Number(roomId),
-        guestId: Number(guestId),
-        checkIn: String(checkIn),
-        checkOut: String(checkOut)
-      }).toPromise();
-      if (created) this.bookings.unshift(created);
-      this.bookingForm.patchValue({ checkIn: '', checkOut: '' });
-    } catch (e: any) {
-      // Will show conflict message from API when double-booked (409)
-      this.error = e?.error ?? e?.message ?? 'Failed to add booking';
-    } finally { this.saving = false; }
+  trackByPath(index: number, item: any): string {
+    return item.path;
   }
 }

@@ -1,0 +1,134 @@
+<section class="max-w-md mx-auto">
+  <div
+    class="rounded-3xl border border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-slate-900/70 backdrop-blur p-6 sm:p-8 shadow-xl"
+  >
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-xl font-bold">
+        {{ isLoginMode ? 'Staff Login' : 'Create Staff Account' }}
+      </h2>
+      <button
+        type="button"
+        (click)="toggleMode()"
+        class="text-sm text-blue-600 dark:text-indigo-400 hover:underline"
+        [disabled]="loading"
+        aria-label="Switch auth mode"
+      >
+        {{ isLoginMode ? 'Need an account? Sign up' : 'Have an account? Log in' }}
+      </button>
+    </div>
+
+    <!-- Error -->
+    <div *ngIf="error" class="p-3 rounded-lg border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-300 text-sm mb-4">
+      {{ error }}
+    </div>
+
+    <!-- Form -->
+    <form [formGroup]="form" (ngSubmit)="submit()" class="grid gap-3">
+      <!-- Username -->
+      <div class="flex flex-col">
+        <label for="username" class="text-sm text-slate-600 dark:text-slate-400 mb-1">Username</label>
+        <input
+          id="username"
+          class="border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-slate-900 dark:border-slate-700"
+          formControlName="username"
+          placeholder="e.g. faskath"
+          [class.border-red-500]="form.controls.username.invalid && form.controls.username.touched"
+          autocomplete="username"
+        />
+        <small *ngIf="form.controls.username.invalid && form.controls.username.touched" class="text-red-600 text-xs mt-1">
+          Username is required
+        </small>
+      </div>
+
+      <!-- Password -->
+      <div class="flex flex-col">
+        <div class="flex items-center justify-between">
+          <label for="password" class="text-sm text-slate-600 dark:text-slate-400 mb-1">Password</label>
+          <button type="button" class="text-xs text-slate-500 hover:text-slate-700" (click)="showPwd = !showPwd">
+            {{ showPwd ? 'Hide' : 'Show' }}
+          </button>
+        </div>
+        <input
+          [type]="showPwd ? 'text' : 'password'"
+          id="password"
+          class="border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-slate-900 dark:border-slate-700"
+          formControlName="password"
+          placeholder="••••••"
+          [class.border-red-500]="form.controls.password.invalid && form.controls.password.touched"
+          autocomplete="current-password"
+        />
+        <small *ngIf="form.controls.password.invalid && form.controls.password.touched" class="text-red-600 text-xs mt-1">
+          Password must be at least 6 characters
+        </small>
+
+        <!-- Strength meter (signup shows more context) -->
+        <div class="mt-2">
+          <div class="h-1 w-full bg-slate-200 dark:bg-slate-800 rounded">
+            <div
+              class="h-1 rounded transition-all"
+              [ngClass]="{
+                'bg-red-500': passwordScore <= 1,
+                'bg-yellow-500': passwordScore === 2,
+                'bg-emerald-500': passwordScore >= 3
+              }"
+              [style.width.%]="(passwordScore / 4) * 100"
+            ></div>
+          </div>
+          <div class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+            {{ strengthLabel(passwordScore) }}
+          </div>
+        </div>
+      </div>
+
+      <!-- Confirm (signup only) -->
+      <div class="flex flex-col" *ngIf="!isLoginMode">
+        <div class="flex items-center justify-between">
+          <label for="confirmPassword" class="text-sm text-slate-600 dark:text-slate-400 mb-1">Confirm password</label>
+          <button type="button" class="text-xs text-slate-500 hover:text-slate-700" (click)="showConfirm = !showConfirm">
+            {{ showConfirm ? 'Hide' : 'Show' }}
+          </button>
+        </div>
+        <input
+          [type]="showConfirm ? 'text' : 'password'"
+          id="confirmPassword"
+          class="border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-slate-900 dark:border-slate-700"
+          formControlName="confirmPassword"
+          placeholder="••••••"
+          [class.border-red-500]="form.controls.confirmPassword.invalid && form.controls.confirmPassword.touched"
+          autocomplete="new-password"
+        />
+        <small *ngIf="form.controls.confirmPassword.invalid && form.controls.confirmPassword.touched" class="text-red-600 text-xs mt-1">
+          Password confirmation is required
+        </small>
+      </div>
+
+      <!-- Actions -->
+      <div class="mt-2 flex flex-col gap-2">
+        <button
+          type="submit"
+          class="inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed"
+          [disabled]="loading || form.invalid || (!isLoginMode && form.value.password !== form.value.confirmPassword)"
+          [attr.aria-busy]="loading"
+        >
+          <span class="inline-block" *ngIf="!loading">{{ isLoginMode ? 'Login' : 'Create account' }}</span>
+          <span class="inline-block" *ngIf="loading">Please wait…</span>
+        </button>
+
+        <button
+          type="button"
+          (click)="toggleMode()"
+          class="text-blue-600 dark:text-indigo-400 hover:underline text-sm self-center"
+          [disabled]="loading"
+        >
+          {{ isLoginMode ? 'Need an account? Sign up' : 'Already have an account? Login' }}
+        </button>
+      </div>
+    </form>
+
+    <!-- Tips (optional) -->
+    <div class="mt-4 text-[11px] text-slate-500 dark:text-slate-400 text-center">
+      Use at least 6 characters. Stronger passwords include upper/lowercase letters and numbers or symbols.
+    </div>
+  </div>
+</section>

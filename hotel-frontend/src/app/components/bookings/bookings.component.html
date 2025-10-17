@@ -1,0 +1,196 @@
+<section class="space-y-4">
+  <!-- Header / actions -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+    <div>
+      <h2 class="text-xl font-bold">Bookings</h2>
+      <p class="text-sm text-slate-500">Create, manage, and track room stays.</p>
+    </div>
+
+    <div class="flex flex-wrap items-center gap-2">
+      <input
+        type="search"
+        class="w-64 max-w-full border rounded-lg px-3 py-2 text-sm"
+        placeholder="Search by guest or room…"
+        [(ngModel)]="q"
+        (ngModelChange)="filter()"
+      />
+
+      <button
+        type="button"
+        (click)="startCreate()"
+        class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-lg"
+      >
+        <span>＋</span> Add booking
+      </button>
+    </div>
+  </div>
+
+  <!-- Error -->
+  <div *ngIf="error" class="p-3 rounded-lg border border-red-200 bg-red-50 text-red-700">
+    {{ error }}
+  </div>
+
+  <!-- Create / Edit form card -->
+  <form
+    *ngIf="formOpen"
+    [formGroup]="form"
+    (ngSubmit)="editingId ? saveEdit() : addBooking()"
+    class="bg-white dark:bg-slate-900/60 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm p-4 grid gap-3 md:grid-cols-5"
+  >
+    <div class="flex flex-col">
+      <label class="text-sm text-slate-600 mb-1">Room</label>
+      <select class="border rounded-lg px-3 py-2" formControlName="roomId">
+        <option [ngValue]="null" disabled>Select room</option>
+        <option *ngFor="let r of rooms" [ngValue]="r.id">{{ r.number }} ({{ r.type }})</option>
+      </select>
+      <small class="text-xs text-slate-500 mt-1" *ngIf="rooms.length === 0">No rooms yet</small>
+    </div>
+
+    <div class="flex flex-col">
+      <label class="text-sm text-slate-600 mb-1">Guest</label>
+      <select class="border rounded-lg px-3 py-2" formControlName="guestId">
+        <option [ngValue]="null" disabled>Select guest</option>
+        <option *ngFor="let g of guests" [ngValue]="g.id">{{ g.fullName }}</option>
+      </select>
+      <small class="text-xs text-slate-500 mt-1" *ngIf="guests.length === 0">No guests yet</small>
+    </div>
+
+    <div class="flex flex-col">
+      <label class="text-sm text-slate-600 mb-1">Check-in</label>
+      <input type="date" class="border rounded-lg px-3 py-2" formControlName="checkIn" />
+    </div>
+
+    <div class="flex flex-col">
+      <label class="text-sm text-slate-600 mb-1">Check-out</label>
+      <input type="date" class="border rounded-lg px-3 py-2" formControlName="checkOut" />
+    </div>
+
+    <div class="flex items-end gap-2">
+      <button
+        class="bg-green-600 hover:bg-green-700 text-white font-medium px-4 py-2 rounded-lg w-full md:w-auto disabled:opacity-50"
+        [disabled]="saving || form.invalid"
+      >
+        {{ editingId ? 'Save changes' : 'Create booking' }}
+      </button>
+
+      <button
+        type="button"
+        (click)="cancelForm()"
+        class="bg-slate-100 hover:bg-slate-200 text-slate-800 font-medium px-4 py-2 rounded-lg w-full md:w-auto"
+      >
+        Cancel
+      </button>
+    </div>
+  </form>
+
+  <!-- Loading skeleton -->
+  <div *ngIf="loading" class="grid gap-2">
+    <div class="h-20 rounded-xl bg-slate-100 animate-pulse"></div>
+    <div class="h-20 rounded-xl bg-slate-100 animate-pulse"></div>
+    <div class="h-20 rounded-xl bg-slate-100 animate-pulse"></div>
+  </div>
+
+  <!-- Empty state -->
+  <div *ngIf="!loading && view.length === 0" class="rounded-2xl border border-dashed border-slate-300 p-8 text-center">
+    <div class="text-3xl mb-2">🗂️</div>
+    <p class="font-medium">No bookings found</p>
+    <p class="text-slate-500 text-sm">Try adjusting your search, or create a new booking.</p>
+    <button
+      type="button"
+      (click)="startCreate()"
+      class="mt-4 inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-lg"
+    >
+      ＋ Add booking
+    </button>
+  </div>
+
+  <!-- List -->
+  <ul *ngIf="!loading && view.length" class="grid gap-2">
+    <li *ngFor="let b of view" class="bg-white dark:bg-slate-900/60 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm p-4">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+        <div class="text-sm">
+          <div class="font-medium">
+            Room <span class="font-semibold text-slate-900 dark:text-slate-100">#{{ b.room?.number || b.roomId }}</span>
+            · Guest <span class="font-semibold">{{ b.guest?.fullName || b.guestId }}</span>
+          </div>
+          <div class="text-slate-600 dark:text-slate-400 mt-1">
+            {{ b.checkIn | date:'mediumDate' }} → {{ b.checkOut | date:'mediumDate' }}
+            · <span class="font-medium">{{ b.totalPrice | currency:'EUR':'symbol':'1.0-0' }}</span>
+            ·
+            <span
+              class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold"
+              [ngClass]="{
+                'bg-amber-100 text-amber-800': b.status === 'Reserved',
+                'bg-indigo-100 text-indigo-800': b.status === 'CheckedIn',
+                'bg-emerald-100 text-emerald-800': b.status === 'CheckedOut',
+                'bg-slate-100 text-slate-800': b.status !== 'Reserved' && b.status !== 'CheckedIn' && b.status !== 'CheckedOut'
+              }"
+            >
+              ● {{ b.status }}
+            </span>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2">
+          <button
+            (click)="doCheckIn(b)"
+            [disabled]="saving || b.status === 'CheckedIn' || b.status === 'CheckedOut'"
+            class="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-sm px-3 py-2 rounded-lg"
+          >
+            Check-in
+          </button>
+          <button
+            (click)="doCheckOut(b)"
+            [disabled]="saving || b.status !== 'CheckedIn'"
+            class="bg-slate-800 hover:bg-black disabled:opacity-50 text-white text-sm px-3 py-2 rounded-lg"
+          >
+            Check-out
+          </button>
+          <button
+            (click)="edit(b)"
+            class="bg-blue-600 hover:bg-blue-700 text-white text-sm px-3 py-2 rounded-lg"
+          >
+            Edit
+          </button>
+          <button
+            (click)="askDelete(b)"
+            class="bg-red-600 hover:bg-red-700 text-white text-sm px-3 py-2 rounded-lg"
+          >
+            Delete
+          </button>
+        </div>
+      </div>
+
+      <!-- Inline details (expandable) -->
+      <div *ngIf="openId === b.id" class="mt-3 text-sm text-slate-600 dark:text-slate-400">
+        <div>Booking ID: <span class="font-mono">{{ b.id }}</span></div>
+        <div>Room type: {{ b.room?.type }}</div>
+        <div>Nightly: {{ b.room?.pricePerNight | currency:'EUR' }}</div>
+      </div>
+    </li>
+  </ul>
+
+  <!-- Delete confirm modal -->
+  <div
+    class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+    *ngIf="confirmDelete"
+    (click)="confirmDelete=null"
+  >
+    <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-xl p-6 w-full max-w-sm" (click)="$event.stopPropagation()">
+      <h3 class="text-lg font-semibold">Delete booking?</h3>
+      <p class="text-sm text-slate-600 dark:text-slate-400 mt-1">
+        This action cannot be undone.
+      </p>
+      <div class="mt-4 flex items-center justify-end gap-2">
+        <button
+          class="px-4 py-2 rounded-lg bg-slate-100 dark:bg-slate-800"
+          (click)="confirmDelete=null"
+        >Cancel</button>
+        <button
+          class="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white"
+          (click)="remove(confirmDelete!)"
+        >Delete</button>
+      </div>
+    </div>
+  </div>
+</section>
