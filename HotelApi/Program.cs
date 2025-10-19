@@ -71,6 +71,7 @@ app.MapRoomsEndpoints();
 app.MapGuestsEndpoints();
 app.MapBookingsEndpoints();
 app.MapReportsEndpoints();
+app.MapPaymentEndpoints();
 app.MapAuthEndpoints(app.Configuration);
 
 app.Run();

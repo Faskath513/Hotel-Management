@@ -10,6 +10,43 @@ export interface Booking {
 }
 export interface Revenue { date: string; revenue: number; }
 
+export interface Payment {
+  id: number;
+  bookingId: number;
+  amount: number;
+  paymentMethod: string;
+  transactionId?: string;
+  checkNumber?: string;
+  paymentDate: string;
+  status: string;
+  notes?: string;
+}
+
+export interface PaymentDto {
+  bookingId: number;
+  amount: number;
+  paymentMethod: string;
+  transactionId?: string;
+  checkNumber?: string;
+  notes?: string;
+}
+
+export interface ReceiptDto {
+  paymentId: number;
+  bookingId: number;
+  guestName: string;
+  roomNumber: string;
+  roomType: string;
+  checkIn: string;
+  checkOut: string;
+  amount: number;
+  paymentMethod: string;
+  transactionId?: string;
+  checkNumber?: string;
+  paymentDate: string;
+  notes?: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class HotelService {
   private api = 'http://localhost:5276'; // backend
@@ -96,5 +133,34 @@ export class HotelService {
   logout() {
     this.setToken(null, null);
     return this.http.post(`${this.api}/auth/logout`, {}, this.authHeaders());
+  }
+
+  // Payment methods
+  getPayments(): Observable<Payment[]> {
+    return this.http.get<Payment[]>(`${this.api}/payments`, this.authHeaders());
+  }
+
+  getPayment(id: number): Observable<Payment> {
+    return this.http.get<Payment>(`${this.api}/payments/${id}`, this.authHeaders());
+  }
+
+  createPayment(payment: PaymentDto): Observable<Payment> {
+    return this.http.post<Payment>(`${this.api}/payments`, payment, this.authHeaders());
+  }
+
+  getReceipt(paymentId: number): Observable<ReceiptDto> {
+    return this.http.get<ReceiptDto>(`${this.api}/payments/${paymentId}/receipt`, this.authHeaders());
+  }
+
+  getPaymentsByBooking(bookingId: number): Observable<Payment[]> {
+    return this.http.get<Payment[]>(`${this.api}/bookings/${bookingId}/payments`, this.authHeaders());
+  }
+
+  updatePaymentStatus(id: number, status: string): Observable<Payment> {
+    return this.http.put<Payment>(`${this.api}/payments/${id}/status`, status, this.authHeaders());
+  }
+
+  deletePayment(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.api}/payments/${id}`, this.authHeaders());
   }
 }

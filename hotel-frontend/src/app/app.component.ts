@@ -30,6 +30,7 @@ export class AppComponent implements OnInit, OnDestroy {
     { path: '/rooms', label: 'Rooms', icon: '🛏️' },
     { path: '/guests', label: 'Guests', icon: '👥' },
     { path: '/bookings', label: 'Bookings', icon: '📅' },
+    { path: '/payments', label: 'Payments', icon: '💳' },
     { path: '/reports', label: 'Reports', icon: '📈' }
   ];
 

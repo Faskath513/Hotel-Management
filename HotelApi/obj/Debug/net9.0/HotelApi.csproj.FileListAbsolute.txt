@@ -163,3 +163,4 @@
 /Users/mohammedfaskath/HotelApp/HotelApi/bin/Debug/net9.0/Microsoft.IdentityModel.Protocols.OpenIdConnect.dll
 /Users/mohammedfaskath/HotelApp/HotelApi/bin/Debug/net9.0/Microsoft.IdentityModel.Tokens.dll
 /Users/mohammedfaskath/HotelApp/HotelApi/bin/Debug/net9.0/System.IdentityModel.Tokens.Jwt.dll
+/Users/mohammedfaskath/HotelApp/HotelApi/bin/Debug/net9.0/System.Text.Json.dll

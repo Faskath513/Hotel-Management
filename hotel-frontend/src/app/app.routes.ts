@@ -6,6 +6,7 @@ import { BookingsComponent } from './components/bookings/bookings.component';
 import { ReportsComponent } from './components/reports/reports.component';
 import { LoginComponent } from './components/login/login.component';
 import { DashboardComponent } from './components/dashboard/dashboard.component';
+import { PaymentsComponent } from './components/payments/payments.component';
 
 const authGuard = () => {
   const token = (() => {
@@ -23,6 +24,7 @@ export const routes: Routes = [
   { path: 'rooms', component: RoomsComponent, canMatch: [authGuard] },
   { path: 'guests', component: GuestsComponent, canMatch: [authGuard] },
   { path: 'bookings', component: BookingsComponent, canMatch: [authGuard] },
+  { path: 'payments', component: PaymentsComponent, canMatch: [authGuard] },
   { path: 'reports', component: ReportsComponent, canMatch: [authGuard] },
   { path: '**', redirectTo: 'rooms' }
 ];
