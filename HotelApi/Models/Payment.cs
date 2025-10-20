@@ -51,3 +51,4 @@ public class ReceiptDto
     public DateTime PaymentDate { get; set; }
     public string? Notes { get; set; }
 }
+
